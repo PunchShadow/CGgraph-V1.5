@@ -1442,14 +1442,13 @@ class CPU_SSSP
           frontierAppendNum_thread_((ThreadNum * CUSTOM_CHUNK_NUM_FRONTIER_APPEND_EACH_THREAD) > visitedBitsetNum_
                                         ? ThreadNum
                                         : (ThreadNum * CUSTOM_CHUNK_NUM_FRONTIER_APPEND_EACH_THREAD)),
-          chunkNum_frontierAppend_eachThread(frontierAppendNum_thread_ / ThreadNum), is_SSSP_destWeight_(is_SSSP_destWeight)
+          chunkNum_frontierAppend_eachThread(frontierAppendNum_thread_ / ThreadNum),
+          is_SSSP_destWeight_(is_SSSP_destWeight && std::is_same_v<vertex_id_type, edge_data_type>)
     {
         CPJ::Timer time;
         if (is_SSSP_destWeight_)
         {
             time.start();
-            constexpr bool isSame = std::is_same<vertex_id_type, edge_data_type>::value;
-            if constexpr (!isSame) assert_msg(false, "[is_SSSP_destWeight_] need <vertex_id_type> same as <edge_data_type>");
             assert_msg((edgeNum_ * 2) < std::numeric_limits<countl_type>::max(), "(edgeNum_ * 2) large than [countl_type] max()");
             csr_destWeight_ = CPJ::AllocMem::allocMem_memset<vertex_id_type>(edgeNum_ * 2);
             omp_par_for(countl_type edge_id = 0; edge_id < edgeNum_; edge_id++)
@@ -2451,7 +2450,7 @@ __global__ void SSSP_balance_model_device_kernel_destWeight(vertex_data_type* __
 
 __global__ void
 SSSP_balance_model_device_kernel(vertex_data_type* __restrict__ vertexValue, const countl_type* __restrict__ csr_offset,
-                                 const vertex_id_type* __restrict__ csr_dest, const vertex_id_type* __restrict__ csr_weight, /* 基本数据 */
+                                 const vertex_id_type* __restrict__ csr_dest, const edge_data_type* __restrict__ csr_weight, /* 基本数据 */
                                  const vertex_id_type* __restrict__ frontier_in, vertex_id_type* __restrict__ frontier_out,  /* frontier */
                                  const count_type frontierNum, const countl_type totalDegree, count_type* frontierNum_next, /* frontier 常量信息 */
                                  const countl_type* __restrict__ frontier_degExSum_, const countl_type* __restrict__ frontier_balance_device,
@@ -2689,7 +2688,8 @@ class GPU_SSSP
   public:
     GPU_SSSP(CSR_Result_type& csrResult_, GPU_memory_type gpuMemoryType = GPU_memory_type::GPU_MEM, const bool is_SSSP_destWeight = true)
         : vertexNum_(csrResult_.vertexNum), edgeNum_(csrResult_.edgeNum), csr_offset_host_(csrResult_.csr_offset),
-          csr_dest_host_(csrResult_.csr_dest), csr_weight_host_(csrResult_.csr_weight), is_SSSP_destWeight_(is_SSSP_destWeight),
+          csr_dest_host_(csrResult_.csr_dest), csr_weight_host_(csrResult_.csr_weight),
+          is_SSSP_destWeight_(is_SSSP_destWeight && std::is_same_v<vertex_id_type, edge_data_type>),
           bitset_size_(sizeof(int) * (vertexNum_ + INT_SIZE - 1) / INT_SIZE),
           is_sortFrontier_((vertexNum_ <= std::numeric_limits<int>::max()) && ISSORT), num_vertex_bits_((int)log2((float)vertexNum_) + 1)
     {
@@ -2697,8 +2697,6 @@ class GPU_SSSP
         if (is_SSSP_destWeight_)
         {
             time.start();
-            constexpr bool isSame = std::is_same<vertex_id_type, edge_data_type>::value;
-            if constexpr (!isSame) assert_msg(false, "[is_SSSP_destWeight_] need <vertex_id_type> same as <edge_data_type>");
             assert_msg((edgeNum_ * 2) < std::numeric_limits<countl_type>::max(), "(edgeNum_ * 2) large than [countl_type] max()");
             csr_destWeight_host_ = CPJ::AllocMem::allocMem_memset<vertex_id_type>(edgeNum_ * 2);
             omp_par_for(countl_type edge_id = 0; edge_id < edgeNum_; edge_id++)

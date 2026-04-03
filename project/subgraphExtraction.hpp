@@ -41,7 +41,7 @@ class SubgraphExt
 
   private:
     const size_t bitset_size_{0};
-    static constexpr size_t RESERVED_MEM = MB(128);
+    static constexpr size_t RESERVED_MEM = MB(2000);
     static constexpr double RADIO = 0.56;
 
     static constexpr bool SSSP_DEST_WEIGHT = true;

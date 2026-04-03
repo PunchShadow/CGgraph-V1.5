@@ -10,6 +10,7 @@ SET(COMPILE_COMMANDS  ON) # "Whether to export compile commands"
 SET(USE_SIMD  ON) # "Whether to use SIMD instructions"
 SET(USE_BOOST OFF) # find jemalloc
 SET(USE_JEMALLOC OFF) # find jemalloc
+SET(COMPAT_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/src/Compat)
 
 if (COMPILE_COMMANDS)
     set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -90,30 +91,45 @@ else()
 endif()
 
 
-find_package(MPI REQUIRED)
+find_package(MPI QUIET)
 if(MPI_FOUND)
     message(STATUS "[Find MPI]: YES")
-    message(STATUS "\t- The MPI Include: ${MPI_INCLUDE_PATH}")
-    include_directories(${MPI_INCLUDE_PATH})  #如果不添加可能找不到<mpi.h>
+    if (MPI_C_INCLUDE_DIRS)
+        include_directories(${MPI_C_INCLUDE_DIRS})
+    elseif(MPI_INCLUDE_PATH)
+        include_directories(${MPI_INCLUDE_PATH}) # legacy CMake var
+    endif()
     message(STATUS "\t- The MPI Lib: ${MPI_C_LIBRARIES}")
-else(MPI_FOUND)
-	message(FATAL_ERROR "[Find MPI]: NO")
-endif(MPI_FOUND)
+else()
+    message(WARNING "[Find MPI]: NO, using local single-process MPI compatibility header")
+    include_directories(BEFORE ${COMPAT_ROOT}/mpi)
+endif()
 
 
 # ------------------------------------------------------------------------------
-# gflag - 自定义安装
+# gflags
 # ------------------------------------------------------------------------------
-SET(MY_GFLAGS ON)
-SET(MY_GFLAGS_INCLUDE /home/omnisky/cpj_app/gflag/gflags-master/build/include/) # 替换成你的gflags路径
-SET(MY_GFLAGS_LIB /home/omnisky/cpj_app/gflag/gflags-master/build/lib/libgflags.a)# 替换成你的gflags路径
-if(MY_GFLAGS)
-    message(STATUS "[Find Gflags]: YES (customize)")
-    message(STATUS "\t- The Gflags Include: ${MY_GFLAGS_INCLUDE}")
-    include_directories(${MY_GFLAGS_INCLUDE})
-    message(STATUS "\t- The Gflags Lib: ${MY_GFLAGS_LIB}")
-else(MY_GFLAGS)
-    message(FATAL_ERROR "[Find Gflags]: NO (customize)")
+find_path(GFLAGS_INCLUDE_DIR gflags/gflags.h)
+find_library(GFLAGS_LIBRARY NAMES gflags libgflags)
+if(GFLAGS_INCLUDE_DIR AND GFLAGS_LIBRARY)
+    message(STATUS "[Find Gflags]: YES")
+    message(STATUS "\t- The Gflags Include: ${GFLAGS_INCLUDE_DIR}")
+    message(STATUS "\t- The Gflags Lib: ${GFLAGS_LIBRARY}")
+    include_directories(${GFLAGS_INCLUDE_DIR})
+else()
+    message(WARNING "[Find Gflags]: NO, using local compatibility parser")
+    include_directories(BEFORE ${COMPAT_ROOT}/gflags)
+endif()
+
+# ------------------------------------------------------------------------------
+# TBB
+# ------------------------------------------------------------------------------
+find_library(TBB_LIBRARY NAMES tbb PATHS /usr/local/tbb-2019_U8/lib /usr/lib/x86_64-linux-gnu)
+if(TBB_LIBRARY)
+    message(STATUS "[Find TBB]: YES")
+    message(STATUS "\t- The TBB Lib: ${TBB_LIBRARY}")
+else()
+    message(WARNING "[Find TBB]: NO, continue without linking tbb explicitly")
 endif()
 
 # ------------------------------------------------------------------------------
@@ -149,11 +165,47 @@ cuda_add_library(MY_CPP_CU SHARED
 
 SET(Program CGgraphV1.5)
 CUDA_ADD_EXECUTABLE(${Program} CGgraphV1.5.cu)
-target_link_libraries(${Program} dl mpi z event event_pthreads hwloc numa ibverbs cuda nvidia-ml omp ${CUDA_LIBS} ucp)
-target_link_libraries(${Program} /home/omnisky/cpj_app/gflag/gflags-master/build/lib/libgflags.a) 
-target_link_libraries(${Program} /usr/local/tbb-2019_U8/lib/libtbb.so)
+
+set(CGGRAPH_LINK_LIBS MY_CPP_CU ${CUDA_LIBS})
+
+find_library(LIBDL_LIBRARY NAMES dl)
+if(LIBDL_LIBRARY)
+    list(APPEND CGGRAPH_LINK_LIBS ${LIBDL_LIBRARY})
+endif()
+
+find_library(LIBZ_LIBRARY NAMES z)
+if(LIBZ_LIBRARY)
+    list(APPEND CGGRAPH_LINK_LIBS ${LIBZ_LIBRARY})
+endif()
+
+find_library(LIBNUMA_LIBRARY NAMES numa)
+if(LIBNUMA_LIBRARY)
+    list(APPEND CGGRAPH_LINK_LIBS ${LIBNUMA_LIBRARY})
+endif()
+
+find_library(LIBNVML_LIBRARY NAMES nvidia-ml)
+if(LIBNVML_LIBRARY)
+    list(APPEND CGGRAPH_LINK_LIBS ${LIBNVML_LIBRARY})
+endif()
+
+if(OPENMP_FOUND)
+    list(APPEND CGGRAPH_LINK_LIBS ${OpenMP_CXX_LIBRARIES})
+endif()
+
+if(MPI_FOUND)
+    list(APPEND CGGRAPH_LINK_LIBS ${MPI_C_LIBRARIES} ${MPI_CXX_LIBRARIES})
+endif()
+
+if(GFLAGS_LIBRARY)
+    list(APPEND CGGRAPH_LINK_LIBS ${GFLAGS_LIBRARY})
+endif()
+
+if(TBB_LIBRARY)
+    list(APPEND CGGRAPH_LINK_LIBS ${TBB_LIBRARY})
+endif()
+
 if (USE_JEMALLOC)
     target_link_libraries(${Program} /usr/local/lib/libjemalloc.so.2)
 endif()
-target_link_libraries(${Program} MY_CPP_CU)
 
+target_link_libraries(${Program} ${CGGRAPH_LINK_LIBS})

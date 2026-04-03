@@ -404,7 +404,7 @@ class ReorderGraph
             }
             else
             {
-                vertex_id_type* csr_weight_check = readArrayFromFile<edge_data_type>(csrWeight_path);
+                edge_data_type* csr_weight_check = readArrayFromFile<edge_data_type>(csrWeight_path);
                 omp_par_for(countl_type edge_id = 0; edge_id < edgeNum_; edge_id++)
                 {
                     assert_msg(csrResult_reorder.csr_weight[edge_id] == csr_weight_check[edge_id],

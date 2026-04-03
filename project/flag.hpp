@@ -3,6 +3,7 @@
 #include "gflags/gflags_declare.h"
 
 DECLARE_string(graphName);
+DECLARE_string(input);
 DECLARE_int64(root);
 DECLARE_int32(algorithm);
 DECLARE_int32(gpuMemory);

@@ -19,22 +19,22 @@ typedef vertex_id_type emogi_type;
 template <typename T>
 struct MemAlignTrait
 {
-    static const emogi_type value = static_cast<emogi_type>(MEM_ALIGN_32); // 默认值为MEM_ALIGN_32，表示不支持的类型
-    constexpr static const vertex_data_type vertexValue = std::numeric_limits<emogi_type>::max();
+    static const emogi_type value = static_cast<emogi_type>(MEM_ALIGN_32);
+    constexpr static const vertex_data_type vertexValue = std::numeric_limits<vertex_data_type>::max();
 };
 
 template <>
 struct MemAlignTrait<uint32_t>
 {
-    static const emogi_type value = static_cast<emogi_type>(MEM_ALIGN_32); // 32位时的对齐值
-    constexpr static const vertex_data_type vertexValue = std::numeric_limits<emogi_type>::max();
+    static const emogi_type value = static_cast<emogi_type>(MEM_ALIGN_32);
+    constexpr static const vertex_data_type vertexValue = std::numeric_limits<vertex_data_type>::max();
 };
 
 template <>
 struct MemAlignTrait<uint64_t>
 {
-    static const emogi_type value = static_cast<emogi_type>(MEM_ALIGN_64); // 64位时的对齐值
-    constexpr static const vertex_data_type vertexValue = std::numeric_limits<emogi_type>::max();
+    static const emogi_type value = static_cast<emogi_type>(MEM_ALIGN_64);
+    constexpr static const vertex_data_type vertexValue = std::numeric_limits<vertex_data_type>::max();
 };
 
 constexpr emogi_type MEM_ALIGN_CPJ = MemAlignTrait<emogi_type>::value;

@@ -56,6 +56,7 @@ Enabling CPU and GPU Collaborative Processing of Graph Data. Source Code for `CG
 ---
 ## Run CGgraph
 - During runtime, CGgraph identifies different graph data based on the defined ***graphName***. Additionally, ***graphName*** is invoked multiple times within the program.
+- You can also pass `-input` to load Subway-style graph files directly (`.el`, `.wel`, `.txt`, `.snap`, `.bcsr`, `.bwcsr`).
 - After compiling CGgraph, the program generates an executable file named **CGgraphV1.5**. You can access the following information by executing the command` $ CGgraphV1.5 --help` in the terminal:：
  ```
   -algorithm (The Algorithm To Be Run: [0]:BFS, [1]:SSSP) type: int32
@@ -63,6 +64,8 @@ Enabling CPU and GPU Collaborative Processing of Graph Data. Source Code for `CG
     -gpuMemory (The GPU Memory Type: [0]:GPU_MEM, [1]:UVM, [2]:ZERO_COPY)
       type: int32 default: 0
     -graphName (The Graph Name) type: string default: "friendster"
+    -input (The Input Graph File Path (.el/.wel/.txt/.snap/.bcsr/.bwcsr))
+      type: string default: ""
     -root (The Root For BFS/SSSP Or MaxIte For PageRank) type: int64
       default: 0
     -runs (The Number Of Times That The Algorithm Needs To Run) type: int32
@@ -79,6 +82,8 @@ Enabling CPU and GPU Collaborative Processing of Graph Data. Source Code for `CG
 -  **例子**:
 	If you want to run the BFS algorithm on the graph data file with ***graphName*** set to friendster, you should execute:
 `$ CGgraphV1.5 -graphName friendster -algorithm 0 -gpuMemory 0 -root 100 -runs 5  -useDeviceId 0`
+	To run a Subway-format graph file directly, for example:
+`$ CGgraphV1.5 -input /path/to/graph.el -algorithm 0 -root 0 -runs 5 -useDeviceId 0`
 	If the program runs successfully, the console will display the following results (12Cores CPU + 2560Cores GPU):
 	![fig](./fig/run_example.png)
 	Of course, a significant amount of console output can sometimes slightly impact the performance of CGgraphV1.5

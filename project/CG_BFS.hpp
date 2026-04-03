@@ -175,6 +175,7 @@ class CG_BFS
         /* Result */
         globalTimer_.start();
         CUDA_CHECK(MALLOC_HOST(&vertexValue_host_, vertexNum_host_));
+        CUDA_CHECK(MALLOC_HOST(&vertexValue_host2_, vertexNum_host_));
         CUDA_CHECK(MALLOC_DEVICE(&vertexValue_device_, vertexNum_host_));
         Msg_info("Graph result vertexValue alloc ready, Used time: %s", globalTimer_.get_time_str().c_str());
 
@@ -579,31 +580,27 @@ class CG_BFS
     {
         if (USE_DEVICE_FOR_GET_FRONTIER)
         {
-            //! 这里为了不多申请CPU内存，我们借用frontier_in_host_
-            CUDA_CHECK(D2H(frontier_in_host_, vertexValue_device_, vertexNum_host_));
+            CUDA_CHECK(D2H(vertexValue_host2_, vertexValue_device_, vertexNum_host_));
             omp_par_for(count_type index = 0; index < vertexNum_host_; index++)
             {
-                vertexValue_host_[index] = std::min(frontier_in_host_[index], vertexValue_host_[index]);
+                vertexValue_host_[index] = std::min(vertexValue_host2_[index], vertexValue_host_[index]);
             }
 
             return vertexValue_host_;
         }
         else
         {
-            //! 这里为了不多申请CPU内存，我们借用frontier_in_host_
             if ((CGModel_BFS == CGModel::GPU_ONLY) && LOCK_GPU_ONLY_)
             {
-                bool isSameType = std::is_same_v<vertex_id_type, vertex_data_type>;
-                assert_msg(isSameType, "Need Same type");
-                CUDA_CHECK(D2H(frontier_in_host_, vertexValue_device_, vertexNum_host_));
+                CUDA_CHECK(D2H(vertexValue_host2_, vertexValue_device_, vertexNum_host_));
                 omp_par_for(count_type index = 0; index < visitedBitsetNum_host_; index++)
                 {
                     uint32_t word32 = visitedBitset_host_[index];
-                    vertex_id_type vertex_id_start = index * INT_SIZE;
+                    count_type vertex_id_start = index * INT_SIZE;
                     if (word32 == std::numeric_limits<uint32_t>::max())
                     {
                         std::copy(vertexValue_host_ + vertex_id_start, vertexValue_host_ + vertex_id_start + INT_SIZE,
-                                  frontier_in_host_ + vertex_id_start);
+                                  vertexValue_host2_ + vertex_id_start);
                     }
                     else
                     {
@@ -611,7 +608,7 @@ class CG_BFS
                         {
                             if (word32 & 1)
                             {
-                                frontier_in_host_[vertex_id_start] = vertexValue_host_[vertex_id_start];
+                                vertexValue_host2_[vertex_id_start] = vertexValue_host_[vertex_id_start];
                             }
                             vertex_id_start++;
                             word32 = word32 >> 1;
@@ -619,7 +616,7 @@ class CG_BFS
                     }
                 }
 
-                return frontier_in_host_;
+                return vertexValue_host2_;
             }
             else if (CGModel_BFS != CGModel::CPU_ONLY)
             {

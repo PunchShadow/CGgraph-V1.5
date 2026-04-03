@@ -662,7 +662,7 @@ __global__ void SSSP_balance_model_device_kernel_destWeight(vertex_data_type* __
 
 __global__ void
 SSSP_balance_model_device_kernel(vertex_data_type* __restrict__ vertexValue, const countl_type* __restrict__ csr_offset,
-                                 const vertex_id_type* __restrict__ csr_dest, const vertex_id_type* __restrict__ csr_weight, /* 基本数据 */
+                                 const vertex_id_type* __restrict__ csr_dest, const edge_data_type* __restrict__ csr_weight, /* 基本数据 */
                                  const vertex_id_type* __restrict__ frontier_in, vertex_id_type* __restrict__ frontier_out,  /* frontier */
                                  const count_type frontierNum, const countl_type totalDegree, count_type* frontierNum_next, /* frontier 常量信息 */
                                  const countl_type* __restrict__ frontier_degExSum_, const countl_type* __restrict__ frontier_balance_device,
@@ -986,7 +986,7 @@ __global__ void SSSP_balance_model_device_kernel_destWeight_CPUGPU(vertex_data_t
 
 __global__ void SSSP_balance_model_device_kernel_CPUGPU(vertex_data_type* __restrict__ vertexValue, const countl_type* __restrict__ csr_offset,
                                                         const vertex_id_type* __restrict__ csr_dest,
-                                                        const vertex_id_type* __restrict__ csr_weight,               /* 基本数据 */
+                                                        const edge_data_type* __restrict__ csr_weight,               /* 基本数据 */
                                                         const vertex_id_type* __restrict__ frontier_in,              /* frontier */
                                                         const count_type frontierNum, const countl_type totalDegree, /* frontier 常量信息 */
                                                         const countl_type* __restrict__ frontier_degExSum_,

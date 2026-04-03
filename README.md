@@ -56,6 +56,7 @@
 ---
 ## CGgraph的运行
 - CGgraph在运行时, 会根据定义的***graphName***来识别不同的图数据，同时***graphName***在程序中会被多次调用；
+- 也可以通过 `-input` 直接加载 Subway 风格图文件（`.el`、`.wel`、`.txt`、`.snap`、`.bcsr`、`.bwcsr`）；
 - 程序编译完成后，会生成名为CGgraphV1.5的可运行文件，可以通过在终端中执行以下命令`$ CGgraphV1.5 --help`来获取如下信息：
  ```
     -algorithm (The Algorithm To Be Run: [0]:BFS, [1]:SSSP) type: int32
@@ -63,6 +64,8 @@
     -gpuMemory (The GPU Memory Type: [0]:GPU_MEM, [1]:UVM, [2]:ZERO_COPY)
       type: int32 default: 0
     -graphName (The Graph Name) type: string default: "friendster"
+    -input (The Input Graph File Path (.el/.wel/.txt/.snap/.bcsr/.bwcsr))
+      type: string default: ""
     -root (The Root For BFS/SSSP Or MaxIte For PageRank) type: int64
       default: 0
     -runs (The Number Of Times That The Algorithm Needs To Run) type: int32
@@ -79,6 +82,8 @@
 -  **例子**:
 	如果想要运行 ***graphName*** 为 *friendster* 的图数据文件的BFS算法，则执行:
 `$ CGgraphV1.5 -graphName friendster -algorithm 0 -gpuMemory 0 -root 100 -runs 5  -useDeviceId 0`
+	如果想直接运行 Subway 格式输入文件，例如:
+`$ CGgraphV1.5 -input /path/to/graph.el -algorithm 0 -root 0 -runs 5 -useDeviceId 0`
 	如果程序正常运行控制台会得到以下结果 (12Cores CPU + 2560Cores GPU):
 	![图片描述](./fig/run_example.png)
 	当然，大量控制台输出有时会略微损失一部分CGgraphV1.5的性能。
