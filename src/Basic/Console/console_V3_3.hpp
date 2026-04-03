@@ -12,6 +12,7 @@
 #include "Basic/Log/log.hpp"
 #include "Basic/Other/placeholder_CPJ.hpp"
 #include "console_var.hpp"
+#include <cstring>
 #include <iostream>
 #include <libgen.h>
 #include <omp.h>
